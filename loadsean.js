@@ -1,7 +1,8 @@
 import sys
-import xbmc
-import xbmcgui
+import requests
 import xbmcplugin
+from xbmcgui import ListItem
+from xbmcaddon import Addon
 
 class SeasonVarPlugin:
 
