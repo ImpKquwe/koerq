@@ -7,7 +7,7 @@
     }, 100); // Проверяем каждые 100 мс
 
     function initPlugin() {
-        window.Lampa.Plugin.add('stream_sites', {
+        const plugin = {
             title: 'Онлайн-кинотеатры',
             version: '1.0.0',
             description: 'Плагин для просмотра фильмов и сериалов с сайтов seasonvar.ru и hd-rezka.one.',
@@ -176,6 +176,9 @@
                     url: videoUrl
                 });
             }
-        });
+        };
+
+        // Инициализация плагина
+        plugin.init();
     }
 })();
