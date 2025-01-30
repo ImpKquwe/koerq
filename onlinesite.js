@@ -1,64 +1,41 @@
 (function () {
-    const checkLampa = setInterval(() => {
-        if (window.Lampa && window.Lampa.Menu) {
-            clearInterval(checkLampa); // Останавливаем интервал
-            initPlugin();
+    // Функция добавления пункта меню
+    function addMenuItem() {
+        // Проверяем, загружено ли приложение LAMPA
+        if (!window.Lampa || !window.Lampa.Menu) {
+            console.error('LAMPA API не доступно');
+            return;
         }
-    }, 100); // Проверяем каждые 100 мс
 
-    function initPlugin() {
-        const plugin = {
-            title: 'Онлайн-кинотеатры',
-            version: '1.0.0',
-            description: 'Плагин для просмотра фильмов и сериалов с сайтов seasonvar.ru и hd-rezka.one.',
-            author: 'Ваше имя',
-            sites: [
-                { name: 'Seasonvar', url: 'https://seasonvar.ru' },
-                { name: 'HD-Rezka', url: 'https://hd-rezka.one' }
-            ],
+        // Создаем новый элемент меню
+        const menuItem = {
+            title: 'Онлайн-кинотеатры', // Текст на кнопке
+            icon: 'tv', // CSS класс для иконки (можно использовать FontAwesome или другие иконки)
+            page: 'stream_sites_page', // Уникальный идентификатор страницы
+            action: function () {
+                // Действие при нажатии на кнопку
+                console.log('Кнопка "Онлайн-кинотеатры" нажата');
+                // Переход на новую страницу
+                window.Lampa.Page.go('stream_sites_page');
+            }
+        };
 
-            init: function () {
-                this.addMenu();
-            },
+        // Добавляем элемент в меню
+        window.Lampa.Menu.add(menuItem);
 
-            addMenu: function () {
-                // Проверяем, существует ли метод add
-                if (typeof window.Lampa.Menu.add === 'function') {
-                    window.Lampa.Menu.add('stream_sites', {
-                        title: 'Онлайн-кинотеатры',
-                        icon: 'tv',
-                        page: () => {
-                            this.showSites();
-                        }
-                    });
-                } else {
-                    console.error('Метод Lampa.Menu.add не существует');
-                    this.fallbackAddMenu();
-                }
-            },
+        // Регистрируем новую страницу, которую открывает кнопка
+        window.Lampa.Page.register('stream_sites_page', {
+            title: 'Онлайн-кинотеатры', // Заголовок страницы
+            create: function () {
+                // Создание контента страницы
+                this.sites = [
+                    { name: 'Seasonvar', url: 'https://seasonvar.ru' },
+                    { name: 'HD-Rezka', url: 'https://hd-rezka.one' }
+                ];
 
-            fallbackAddMenu: function () {
-                // Альтернативный способ добавления пункта меню
-                const menu = document.querySelector('.menu');
-                if (menu) {
-                    const menuItem = document.createElement('div');
-                    menuItem.className = 'menu-item';
-                    menuItem.innerHTML = `
-                        <div class="menu-item-icon"><i class="fas fa-film"></i></div>
-                        <div class="menu-item-title">Онлайн-кинотеатры</div>
-                    `;
-                    menuItem.addEventListener('click', () => {
-                        this.showSites();
-                    });
-                    menu.appendChild(menuItem);
-                } else {
-                    console.error('Не удалось найти элемент меню');
-                }
-            },
+                this.content = $('<div>').addClass('stream-sites-page');
 
-            showSites: function () {
                 let html = '';
-
                 this.sites.forEach(site => {
                     html += `
                         <div class="menu-item" data-site="${site.name}">
@@ -68,18 +45,19 @@
                     `;
                 });
 
-                window.Lampa.Page.go({
-                    title: 'Онлайн-кинотеатры',
-                    html: html,
-                    onBack: () => window.Lampa.Menu.show(),
-                    onSelect: (element) => {
-                        const siteName = element.data('site');
-                        const site = this.sites.find(s => s.name === siteName);
-                        this.loadCatalog(site);
-                    }
+                this.content.html(html);
+            },
+            render: function () {
+                // Отображение контента страницы
+                window.Lampa.Main.body().html(this.content);
+
+                // Обработка выбора сайта
+                $('.menu-item').on('hover:enter', (event) => {
+                    const siteName = $(event.target).data('site');
+                    const site = this.sites.find(s => s.name === siteName);
+                    this.loadCatalog(site);
                 });
             },
-
             loadCatalog: function (site) {
                 window.Lampa.Activity.loader(true);
 
@@ -102,7 +80,7 @@
                         window.Lampa.Page.go({
                             title: site.name,
                             html: html,
-                            onBack: () => this.showSites(),
+                            onBack: () => this.render(),
                             onSelect: (element) => {
                                 const id = element.data('id');
                                 const type = element.data('type');
@@ -115,7 +93,6 @@
                         window.Lampa.Noty.show('Ошибка загрузки каталога');
                     });
             },
-
             showDetails: function (id, type, site) {
                 window.Lampa.Activity.loader(true);
 
@@ -160,7 +137,6 @@
                         window.Lampa.Noty.show('Ошибка загрузки информации');
                     });
             },
-
             showEpisodes: function (id, seasonNumber, site) {
                 window.Lampa.Activity.loader(true);
 
@@ -194,16 +170,17 @@
                         window.Lampa.Noty.show('Ошибка загрузки серий');
                     });
             },
-
             playVideo: function (videoUrl) {
                 window.Lampa.Player.play({
                     title: 'Видео',
                     url: videoUrl
                 });
             }
-        };
-
-        // Инициализация плагина
-        plugin.init();
+        });
     }
+
+    // Вызываем функцию после загрузки LAMPA
+    document.addEventListener('lampa_ready', function () {
+        addMenuItem();
+    });
 })();
