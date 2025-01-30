@@ -22,13 +22,38 @@
             },
 
             addMenu: function () {
-                window.Lampa.Menu.add('stream_sites', {
-                    title: 'Онлайн-кинотеатры',
-                    icon: 'tv',
-                    page: () => {
+                // Проверяем, существует ли метод add
+                if (typeof window.Lampa.Menu.add === 'function') {
+                    window.Lampa.Menu.add('stream_sites', {
+                        title: 'Онлайн-кинотеатры',
+                        icon: 'tv',
+                        page: () => {
+                            this.showSites();
+                        }
+                    });
+                } else {
+                    console.error('Метод Lampa.Menu.add не существует');
+                    this.fallbackAddMenu();
+                }
+            },
+
+            fallbackAddMenu: function () {
+                // Альтернативный способ добавления пункта меню
+                const menu = document.querySelector('.menu');
+                if (menu) {
+                    const menuItem = document.createElement('div');
+                    menuItem.className = 'menu-item';
+                    menuItem.innerHTML = `
+                        <div class="menu-item-icon"><i class="fas fa-film"></i></div>
+                        <div class="menu-item-title">Онлайн-кинотеатры</div>
+                    `;
+                    menuItem.addEventListener('click', () => {
                         this.showSites();
-                    }
-                });
+                    });
+                    menu.appendChild(menuItem);
+                } else {
+                    console.error('Не удалось найти элемент меню');
+                }
             },
 
             showSites: function () {
